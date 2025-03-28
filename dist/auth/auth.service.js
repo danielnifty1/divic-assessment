@@ -20,19 +20,16 @@ let AuthService = class AuthService {
         this.jwtService = jwtService;
     }
     async register(email, password) {
-        const existingUser = await this.prisma.user.findUnique({
-            where: { email },
-        });
-        if (existingUser) {
-            throw new common_1.BadRequestException("User already exists");
-        }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const data = {
-            email,
-            password: hashedPassword,
-        };
+        const existingUser = await this.prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            throw new common_1.BadRequestException('User already exists');
+        }
         const user = await this.prisma.user.create({
-            data: data,
+            data: {
+                email,
+                password: hashedPassword,
+            },
         });
         const token = this.generateToken(user);
         return { user, token };
@@ -40,11 +37,11 @@ let AuthService = class AuthService {
     async login(email, password) {
         const user = await this.prisma.user.findUnique({ where: { email } });
         if (!user) {
-            throw new common_1.UnauthorizedException("Invalid credentials");
+            throw new common_1.UnauthorizedException('Invalid credentials');
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException("Invalid credentials");
+            throw new common_1.UnauthorizedException('Invalid credentials');
         }
         const token = this.generateToken(user);
         return { user, token };
@@ -52,12 +49,16 @@ let AuthService = class AuthService {
     async biometricLogin(biometricKey) {
         const user = await this.prisma.user.findUnique({ where: { biometricKey } });
         if (!user) {
-            throw new common_1.UnauthorizedException("Invalid biometric key");
+            throw new common_1.UnauthorizedException('Invalid biometric key');
         }
         const token = this.generateToken(user);
         return { user, token };
     }
     async setBiometricKey(userId, biometricKey) {
+        const existingUser = await this.prisma.user.findUnique({ where: { biometricKey } });
+        if (existingUser) {
+            throw new common_1.BadRequestException('Biometric key already in use');
+        }
         const user = await this.prisma.user.update({
             where: { id: userId },
             data: { biometricKey },
