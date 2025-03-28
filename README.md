@@ -22,7 +22,7 @@ A RESTful API service built with NestJS, GraphQL, and Prisma that supports user 
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/danielnifty1/divic-assessment.git
 cd divic-assessment
 ```
 
